@@ -33,11 +33,14 @@ func run(c echo.Context) error {
 	result := new(Result)
 	vm := goja.New()
 	val, err := vm.RunString(s.Script)
+	vm.SetMaxCallStackSize(8000)
 	if err != nil {
 		result.Error = err.Error()
+		vm.ClearInterrupt()
 		return c.JSON(http.StatusOK, result)
 	}
 	result.Error = ""
 	result.Result = val.String()
+	vm.ClearInterrupt()
 	return c.JSON(http.StatusOK, result)
 }
