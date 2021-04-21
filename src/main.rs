@@ -7,7 +7,7 @@ fn exec(src: String) -> Result<String, String> {
         Ok(res) => res,
         Err(e) => {
             return Err(format!(
-                "Uncaught {}",
+                "Parse Uncaught {}",
                 context
                     .throw_syntax_error(e.to_string())
                     .expect_err("interpreter.throw_syntax_error() did not return an error")
