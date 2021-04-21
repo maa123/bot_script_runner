@@ -1,21 +1,7 @@
-use serde::{Deserialize, Serialize};
-use actix_web::{ post, web, App, HttpResponse, HttpServer, Responder, Result};
+use serde::{Serialize, Deserialize};
 use boa::{exec::Executable, parse, Context};
-use tokio::task;
 
-async fn exec(src: String) -> Result<String, String> {
-    let res = task::spawn_blocking(move || {
-        exec_a(src)
-    }).await;
-    let resp = match res {
-        Ok(r) => r,
-        Err(_e) => Err("".to_string()),
-    };
-    resp
-}
-
-fn exec_a(src: String) -> Result<String, String> {
-    // Setup executor
+fn exec(src: String) -> Result<String, String> {
     let mut context = Context::new();
     let expr = match parse(src, false) {
         Ok(res) => res,
@@ -35,60 +21,38 @@ fn exec_a(src: String) -> Result<String, String> {
         .map(|v| v.display().to_string())
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct FormParams {
-    script: String,
-}
-
 #[derive(Serialize)]
 struct ScriptResult {
     result: String,
     error: String
 }
+#[derive(Deserialize)]
+struct Input {
+    script: String
+}
 
-
-#[post("/")]
-async fn script(params: web::Form<FormParams>) -> Result<HttpResponse> {
-    let res: ScriptResult;
-    let script_str = (&params.script).to_string();
-    
-    if let Ok(ar) = tokio::time::timeout(std::time::Duration::from_millis(50), exec(script_str)).await {
-        res = match ar {
-            Ok(s) => ScriptResult {
-                result: s,
-                error: "".to_string()
-            },
-            Err(e) => ScriptResult {
-                result: "".to_string(),
-                error: e
-            }
-        }
-    } else {
-        res = ScriptResult {
+fn main() {
+    let mut input_str = String::new();
+    if let Err(_) = std::io::stdin().read_line(&mut input_str) {
+        let result = serde_json::to_string(&ScriptResult {
             result: "".to_string(),
-            error: "Timeout".to_string()
-        }
+            error: "Error".to_string()
+        }).unwrap();
+        print!("{}", result)
     }
-    Ok(HttpResponse::Ok()
-        .content_type("application/json")
-        .json(res))
-}
-
-
-async fn default() -> impl Responder {
-    HttpResponse::Ok().body("200 OK")
-}
-
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
-        App::new()
-            .service(script)
-            .route("/", web::get().to(default))
-    })
-    .client_timeout(500)
-    .workers(1)
-    .bind("0.0.0.0:7690")?
-    .run()
-    .await
+    let input: Input = serde_json::from_str(&input_str).unwrap();
+    print!("{}", input.script);
+    let str = input.script;
+    let res = match exec(str.to_string()){
+        Ok(s) => ScriptResult {
+            result: s,
+            error: "".to_string()
+        },
+        Err(e) => ScriptResult {
+            result: "".to_string(),
+            error: e
+        }
+    };
+    let result = serde_json::to_string(&res).unwrap();
+    print!("{}", result);
 }
