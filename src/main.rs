@@ -41,7 +41,6 @@ fn main() {
         print!("{}", result)
     }
     let input: Input = serde_json::from_str(&input_str).unwrap();
-    print!("{}", input.script);
     let str = input.script;
     let res = match exec(str.to_string()){
         Ok(s) => ScriptResult {
