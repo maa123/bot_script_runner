@@ -33,6 +33,7 @@ func main() {
 
 func run(c echo.Context) error {
 	cmd_name := "./target/release/bot_script_runner"
+	timeout := false
 	s := new(Script)
 	if err := c.Bind(s); err != nil {
 		return err
@@ -69,6 +70,7 @@ func run(c echo.Context) error {
 					if err := cmd.Process.Kill(); err != nil {
 						log.Print("Stop Error")
 					}
+					timeout = true
 					exit <- true
 				}
 				return
@@ -91,6 +93,9 @@ func run(c echo.Context) error {
 	result.Error = ""
 	if isKill {
 		result.Error = "Error"
+		if timeout {
+			result.Error = "Timeout"
+		}
 	} else {
 		if err := json.Unmarshal([]byte(result_str), &result); err != nil {
 			return err
