@@ -1,11 +1,22 @@
 use serde::{Deserialize, Serialize};
 use actix_web::{ post, web, App, HttpResponse, HttpServer, Responder, Result};
 use boa::{exec::Executable, parse, Context};
+use tokio::task;
 
-fn exec(src: &str) -> Result<String, String> {
+async fn exec(src: String) -> Result<String, String> {
+    let res = task::spawn_blocking(move || {
+        exec_a(src)
+    }).await;
+    let resp = match res {
+        Ok(r) => r,
+        Err(_e) => Err("".to_string()),
+    };
+    resp
+}
+
+fn exec_a(src: String) -> Result<String, String> {
     // Setup executor
     let mut context = Context::new();
-
     let expr = match parse(src, false) {
         Ok(res) => res,
         Err(e) => {
@@ -38,16 +49,26 @@ struct ScriptResult {
 
 #[post("/")]
 async fn script(params: web::Form<FormParams>) -> Result<HttpResponse> {
-    let res = match exec(&params.script) {
-        Ok(s) => ScriptResult {
-            result: s,
-            error: "".to_string()
-        },
-        Err(e) => ScriptResult {
-            result: "".to_string(),
-            error: e
+    let res: ScriptResult;
+    let script_str = (&params.script).to_string();
+    
+    if let Ok(ar) = tokio::time::timeout(std::time::Duration::from_millis(50), exec(script_str)).await {
+        res = match ar {
+            Ok(s) => ScriptResult {
+                result: s,
+                error: "".to_string()
+            },
+            Err(e) => ScriptResult {
+                result: "".to_string(),
+                error: e
+            }
         }
-    };
+    } else {
+        res = ScriptResult {
+            result: "".to_string(),
+            error: "Timeout".to_string()
+        }
+    }
     Ok(HttpResponse::Ok()
         .content_type("application/json")
         .json(res))
@@ -67,7 +88,7 @@ async fn main() -> std::io::Result<()> {
     })
     .client_timeout(500)
     .workers(1)
-    .bind("127.0.0.1:8080")?
+    .bind("0.0.0.0:7690")?
     .run()
     .await
 }
