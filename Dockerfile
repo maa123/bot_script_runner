@@ -2,6 +2,9 @@ FROM rust:alpine as rust
 
 WORKDIR /app
 
+RUN apk --no-cache --update add \
+    python3
+
 COPY . .
 
 RUN cargo build --release
