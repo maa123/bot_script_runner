@@ -42,7 +42,7 @@ struct Input {
 }
 
 fn main() {
-    let platform = rusty_v8::new_default_platform().make_shared();
+    let platform = rusty_v8::new_default_platform(0, false).make_shared();
     rusty_v8::V8::initialize_platform(platform);
     rusty_v8::V8::initialize();
     
