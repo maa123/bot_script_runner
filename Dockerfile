@@ -14,7 +14,7 @@ COPY . .
 
 RUN go build
 
-FROM gcr.io/distroless/static
+FROM gcr.io/distroless/base
 
 WORKDIR /app
 
