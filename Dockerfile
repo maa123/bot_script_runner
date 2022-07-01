@@ -1,15 +1,12 @@
-FROM rust:alpine as rust
+FROM rust as rust
 
 WORKDIR /app
 
-RUN apk --no-cache --update add \
-    python3
-
 COPY . .
 
-RUN V8_FROM_SOURCE=true cargo build --release
+RUN cargo build --release
 
-FROM golang:1.18-alpine as golang
+FROM golang:1.18 as golang
 
 WORKDIR /app
 
@@ -17,7 +14,7 @@ COPY . .
 
 RUN go build
 
-FROM alpine
+FROM gcr.io/distroless/static
 
 WORKDIR /app
 
