@@ -7,7 +7,7 @@ RUN apk --no-cache --update add \
 
 COPY . .
 
-RUN cargo build --release
+RUN V8_FROM_SOURCE=true cargo build --release
 
 FROM golang:1.18-alpine as golang
 
