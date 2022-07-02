@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"time"
 
@@ -47,7 +48,12 @@ func run(c echo.Context) error {
 		cmd_name = ".\\target\\release\\bot_script_runner.exe"
 	}
 
-	cmd := exec.Command(cmd_name)
+	cmdPath, err := filepath.Abs(cmd_name)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command(cmdPath)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return err
