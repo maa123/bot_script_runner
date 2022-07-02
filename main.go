@@ -85,6 +85,7 @@ func run(c echo.Context) error {
 		}
 		if err := cmd.Wait(); err != nil {
 			log.Print("cmd error")
+			log.Print(err)
 		}
 	}()
 	isKill := <-exit
