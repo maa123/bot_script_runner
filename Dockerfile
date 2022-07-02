@@ -14,7 +14,7 @@ COPY . .
 
 RUN go build
 
-FROM debian:bullseye-slim
+FROM gcr.io/distroless/base
 
 WORKDIR /app
 
