@@ -14,7 +14,7 @@ COPY . .
 
 RUN go build
 
-FROM gcr.io/distroless/cc:debug
+FROM gcr.io/distroless/cc
 
 WORKDIR /app
 
