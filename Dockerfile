@@ -6,7 +6,7 @@ COPY . .
 
 RUN cargo build --release
 
-FROM golang:1.18 as golang
+FROM golang:1.23 as golang
 
 WORKDIR /app
 
