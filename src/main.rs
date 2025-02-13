@@ -69,3 +69,39 @@ fn main() {
     let result = serde_json::to_string(&res).unwrap();
     print!("{}", result);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn init_v8() {
+        static INIT: std::sync::Once = std::sync::Once::new();
+        INIT.call_once(|| {
+            let platform = rusty_v8::new_default_platform(0, false).make_shared();
+            rusty_v8::V8::initialize_platform(platform);
+            rusty_v8::V8::initialize();
+        });
+    }
+
+    #[test]
+    fn test_exec() {
+        init_v8();
+        let result = exec_v8("1 + 1");
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "2");
+    }
+
+    #[test]
+    fn test_syntax_error() {
+        init_v8();
+        let result = exec_v8("2 +");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_runtime_error() {
+        init_v8();
+        let result = exec_v8("undefined_variable");
+        assert!(result.is_err());
+    }
+}
