@@ -15,7 +15,6 @@ fn exec_v8(input: &str) -> Result<String, String> {
     let context_scope = &mut v8::ContextScope::new(base_scope, context);
     let scope = &mut v8::TryCatch::new(context_scope);
     let code = v8::String::new(scope, &input).unwrap();
-    code.to_rust_string_lossy(scope);
     if let Some(script) = v8::Script::compile(scope, code, None) {
         if let Some(val) = script.run(scope) {
             if let Some(result) = val.to_string(scope) {
