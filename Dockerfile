@@ -1,4 +1,4 @@
-FROM rust as rust
+FROM nrt.vultrcr.com/docker.io/rust as rust
 
 WORKDIR /app
 
@@ -6,7 +6,7 @@ COPY . .
 
 RUN cargo build --release
 
-FROM golang:1.24 as golang
+FROM nrt.vultrcr.com/docker.io/golang:1.24 as golang
 
 WORKDIR /app
 
