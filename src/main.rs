@@ -1,22 +1,21 @@
 use serde::{Serialize, Deserialize};
 
-fn get_error(scope: &mut rusty_v8::TryCatch<rusty_v8::HandleScope>) -> String {
+fn get_error(scope: &mut v8::TryCatch<v8::HandleScope>) -> String {
     if let Some(exp) = scope.exception() {
-        rusty_v8::Exception::create_message(scope, exp).get(scope).to_rust_string_lossy(scope)
+        v8::Exception::create_message(scope, exp).get(scope).to_rust_string_lossy(scope)
     } else {
         "".to_string()
     }
 }
 
 fn exec_v8(input: &str) -> Result<String, String> {
-    let mut isolate = rusty_v8::Isolate::new(Default::default());
-    let base_scope = &mut rusty_v8::HandleScope::new(&mut isolate);
-    let context = rusty_v8::Context::new(base_scope);
-    let context_scope = &mut rusty_v8::ContextScope::new(base_scope, context);
-    let scope = &mut rusty_v8::TryCatch::new(context_scope);
-    let code = rusty_v8::String::new(scope, &input).unwrap();
-    code.to_rust_string_lossy(scope);
-    if let Some(script) = rusty_v8::Script::compile(scope, code, None) {
+    let mut isolate = v8::Isolate::new(Default::default());
+    let base_scope = &mut v8::HandleScope::new(&mut isolate);
+    let context = v8::Context::new(base_scope, Default::default());
+    let context_scope = &mut v8::ContextScope::new(base_scope, context);
+    let scope = &mut v8::TryCatch::new(context_scope);
+    let code = v8::String::new(scope, &input).unwrap();
+    if let Some(script) = v8::Script::compile(scope, code, None) {
         if let Some(val) = script.run(scope) {
             if let Some(result) = val.to_string(scope) {
                 Ok(result.to_rust_string_lossy(scope))
@@ -42,9 +41,9 @@ struct Input {
 }
 
 fn main() {
-    let platform = rusty_v8::new_default_platform(0, false).make_shared();
-    rusty_v8::V8::initialize_platform(platform);
-    rusty_v8::V8::initialize();
+    let platform = v8::new_default_platform(0, false).make_shared();
+    v8::V8::initialize_platform(platform);
+    v8::V8::initialize();
     
     let mut input_str = String::new();
     if let Err(_) = std::io::stdin().read_line(&mut input_str) {
@@ -77,9 +76,9 @@ mod tests {
     fn init_v8() {
         static INIT: std::sync::Once = std::sync::Once::new();
         INIT.call_once(|| {
-            let platform = rusty_v8::new_default_platform(0, false).make_shared();
-            rusty_v8::V8::initialize_platform(platform);
-            rusty_v8::V8::initialize();
+            let platform = v8::new_default_platform(0, false).make_shared();
+            v8::V8::initialize_platform(platform);
+            v8::V8::initialize();
         });
     }
 
