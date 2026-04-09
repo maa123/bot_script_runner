@@ -27,6 +27,10 @@ jobs:
       packages: write
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+        with:
+          egress-policy: audit
       - name: Checkout repository
         uses: actions/checkout@v6
 
