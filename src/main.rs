@@ -1,32 +1,20 @@
 use serde::{Serialize, Deserialize};
 
-fn get_error(scope: &mut v8::TryCatch<v8::HandleScope>) -> String {
-    if let Some(exp) = scope.exception() {
-        v8::Exception::create_message(scope, exp).get(scope).to_rust_string_lossy(scope)
-    } else {
-        "".to_string()
-    }
-}
-
 fn exec_v8(input: &str) -> Result<String, String> {
     let mut isolate = v8::Isolate::new(Default::default());
-    let base_scope = &mut v8::HandleScope::new(&mut isolate);
-    let context = v8::Context::new(base_scope, Default::default());
-    let context_scope = &mut v8::ContextScope::new(base_scope, context);
-    let scope = &mut v8::TryCatch::new(context_scope);
-    let code = v8::String::new(scope, &input).unwrap();
+    v8::scope!(let scope, &mut isolate);
+    let context = v8::Context::new(scope, Default::default());
+    let scope = &mut v8::ContextScope::new(scope, context);
+    v8::tc_scope!(let scope, scope);
+    let code = v8::String::new(scope, input).unwrap();
     if let Some(script) = v8::Script::compile(scope, code, None) {
         if let Some(val) = script.run(scope) {
-            if let Some(result) = val.to_string(scope) {
-                Ok(result.to_rust_string_lossy(scope))
-            } else {
-                Err(get_error(scope))
-            }            
+            Ok(val.to_rust_string_lossy(scope))
         } else {
-            Err(get_error(scope))
+            Err(scope.exception().map(|exp| exp.to_rust_string_lossy(scope)).unwrap_or_default())
         }
     } else {
-        Err(get_error(scope))
+        Err(scope.exception().map(|exp| exp.to_rust_string_lossy(scope)).unwrap_or_default())
     }
 }
 
