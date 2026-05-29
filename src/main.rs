@@ -6,7 +6,8 @@ fn exec_v8(input: &str) -> Result<String, String> {
     let context = v8::Context::new(scope, Default::default());
     let scope = &mut v8::ContextScope::new(scope, context);
     v8::tc_scope!(let scope, scope);
-    let code = v8::String::new(scope, input).unwrap();
+    let code = v8::String::new(scope, input)
+        .ok_or_else(|| "Failed to create V8 string from input".to_string())?;
     if let Some(script) = v8::Script::compile(scope, code, None) {
         if let Some(val) = script.run(scope) {
             Ok(val.to_rust_string_lossy(scope))
@@ -34,14 +35,25 @@ fn main() {
     v8::V8::initialize();
     
     let mut input_str = String::new();
-    if let Err(_) = std::io::stdin().read_line(&mut input_str) {
+    if std::io::stdin().read_line(&mut input_str).is_err() {
         let result = serde_json::to_string(&ScriptResult {
             result: "".to_string(),
-            error: "Error".to_string()
-        }).unwrap();
-        print!("{}", result)
+            error: "Failed to read input".to_string()
+        }).expect("Failed to serialize error result");
+        print!("{}", result);
+        return;
     }
-    let input: Input = serde_json::from_str(&input_str).unwrap();
+    let input: Input = match serde_json::from_str(&input_str) {
+        Ok(v) => v,
+        Err(e) => {
+            let result = serde_json::to_string(&ScriptResult {
+                result: "".to_string(),
+                error: format!("Failed to parse input: {}", e)
+            }).expect("Failed to serialize error result");
+            print!("{}", result);
+            return;
+        }
+    };
     let script = input.script;
     let res = match exec_v8(&script) {
         Ok(s) => ScriptResult {
@@ -53,7 +65,7 @@ fn main() {
             error: s
         }
     };
-    let result = serde_json::to_string(&res).unwrap();
+    let result = serde_json::to_string(&res).expect("Failed to serialize result");
     print!("{}", result);
 }
 
@@ -75,7 +87,7 @@ mod tests {
         init_v8();
         let result = exec_v8("1 + 1");
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), "2");
+        assert_eq!(result.expect("exec_v8 should succeed"), "2");
     }
 
     #[test]
