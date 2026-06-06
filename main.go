@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -51,9 +52,9 @@ func checkBinaryExists() error {
 
 	if _, err := os.Stat(cmdPath); err != nil {
 		if os.IsNotExist(err) {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Binary not found: "+cmdPath)
+			return errors.New("binary not found: " + cmdPath)
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check binary: "+err.Error())
+		return errors.New("failed to check binary: " + err.Error())
 	}
 	return nil
 }
