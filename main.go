@@ -3,9 +3,11 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -24,12 +26,37 @@ type Result struct {
 }
 
 func main() {
+	// Check if the binary exists before starting the server
+	if err := checkBinaryExists(); err != nil {
+		log.Fatal(err)
+	}
+
 	e := echo.New()
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "200 OK")
 	})
 	e.POST("/", run)
 	e.Logger.Fatal(e.Start(":7690"))
+}
+
+func checkBinaryExists() error {
+	cmd_name := "./target/release/bot_script_runner"
+	if runtime.GOOS == "windows" {
+		cmd_name = ".\\target\\release\\bot_script_runner.exe"
+	}
+
+	cmdPath, err := filepath.Abs(cmd_name)
+	if err != nil {
+		return err
+	}
+
+	if _, err := os.Stat(cmdPath); err != nil {
+		if os.IsNotExist(err) {
+			return errors.New("binary not found: " + cmdPath)
+		}
+		return errors.New("failed to check binary: " + err.Error())
+	}
+	return nil
 }
 
 func run(c echo.Context) error {
