@@ -6,7 +6,7 @@ COPY . .
 
 RUN cargo build --release
 
-FROM nrt.vultrcr.com/docker.io/golang:1.24 as golang
+FROM nrt.vultrcr.com/docker.io/golang:1.25 as golang
 
 WORKDIR /app
 
